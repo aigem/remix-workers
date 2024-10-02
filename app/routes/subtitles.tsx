@@ -92,7 +92,7 @@ export default function Subtitles() {
                         <Form method="post" style={{ display: 'inline' }}>
                             <input type="hidden" name="_action" value="delete" />
                             <input type="hidden" name="id" value={subtitle.id} />
-                            <button type="submit">删除 确定？</button>
+                            <button type="submit">删除</button>
                         </Form>
                     </li>
                 ))}
