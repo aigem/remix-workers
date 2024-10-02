@@ -14,3 +14,7 @@ enabled = true
 binding = "DB" # D1 数据库的绑定名称
 database_name = "subtitle"
 database_id = "35f30017-65e5-4f13-be69-adc9d25ce3f8"
+
+routes = [
+  { pattern = "remix.bbc.us.kg", custom_domain = true }
+]

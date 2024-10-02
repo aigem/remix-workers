@@ -11,31 +11,57 @@ export async function action({ request, context }: ActionFunctionArgs) {
     const { DB } = context.cloudflare.env;
     const contentType = request.headers.get("Content-Type");
 
-    if (contentType && contentType.includes("application/json")) {
-        // 处理 JSON 数据
-        const { videoUrl, subtitleUrl, videoTitle, subtitleContent } = await request.json();
-        
-        await DB.prepare(
-            "INSERT INTO video_subtitles (videoUrl, subtitleUrl, videoTitle, subtitleContent) VALUES (?, ?, ?, ?)"
-        ).bind(videoUrl, subtitleUrl, videoTitle, subtitleContent).run();
+    try {
+        if (contentType && contentType.includes("application/json")) {
+            const data = await request.json();
+            
+            if (data._action === "delete") {
+                // 处理删除操作
+                const result = await DB.prepare("DELETE FROM video_subtitles WHERE id = ?")
+                    .bind(data.id)
+                    .run();
 
-        return json({ success: true, message: "数据已成功添加" });
-    } else {
-        // 处理表单数据
-        const formData = await request.formData();
-        const action = formData.get("_action");
+                if (result.success) {
+                    return json({
+                        success: true,
+                        message: "记录已成功删除",
+                        deletedId: data.id
+                    });
+                } else {
+                    throw new Error("删除操作失败");
+                }
+            } else {
+                // ... 保持现有的添加逻辑 ...
+            }
+        } else {
+            // 处理表单数据
+            const formData = await request.formData();
+            const action = formData.get("_action");
 
-        switch (action) {
-            case "create":
-                // ... 保留现有的创建逻辑 ...
-                break;
-            case "delete":
-                // ... 保留现有的删除逻辑 ...
-                break;
+            if (action === "delete") {
+                const id = formData.get("id") as string;
+                const result = await DB.prepare("DELETE FROM video_subtitles WHERE id = ?")
+                    .bind(id)
+                    .run();
+
+                if (result.success) {
+                    return json({
+                        success: true,
+                        message: "记录已成功删除",
+                        deletedId: id
+                    });
+                } else {
+                    throw new Error("删除操作失败");
+                }
+            }
+            // ... 保持其他表单处理逻辑不变 ...
         }
+    } catch (error) {
+        console.error("Action error:", error);
+        return json({ success: false, message: "操作失败", error: (error as Error).message }, { status: 500 });
     }
 
-    return json({ success: true });
+    return json({ success: false, message: "未知操作" }, { status: 400 });
 }
 
 export default function Subtitles() {
@@ -60,7 +86,7 @@ export default function Subtitles() {
             <ul>
                 {subtitles.map((subtitle: any) => (
                     <li key={subtitle.id}>
-                        <Link to={`/subtitles/${encodeURIComponent(subtitle.videoTitle)}`}>
+                        <Link to={`/subtitles/${subtitle.id}`}>
                             {subtitle.videoTitle}
                         </Link>
                         <Form method="post" style={{ display: 'inline' }}>
