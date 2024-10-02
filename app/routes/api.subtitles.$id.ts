@@ -18,7 +18,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
         .bind(id)
         .first();
 
-    // 如果未找到字幕，抛出404错误
+    // 如果未找到字幕，json返回信息: 状态：未找到字幕
     if (!subtitle) {
         throw json({ error: "未找到字幕" }, { status: 404 });
     }
