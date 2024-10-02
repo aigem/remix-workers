@@ -14,7 +14,7 @@ type Subtitle = {
 // 定义加载器函数，用于处理数据获取
 export async function loader({ params, context }: LoaderFunctionArgs) {
     // 从上下文中获取数据库连接
-    const { DB } = context.env;
+    const { DB } = context.cloudflare.env;
 
     // 从 URL 参数中获取字幕 ID
     const id = params.id;
@@ -73,7 +73,7 @@ export default function SubtitlePage() {
                 <strong>字幕链接：</strong> {subtitle.subtitleUrl}
             </p>
             <p>
-                <strong>字幕内容：</strong> 
+                <strong>字幕内容：</strong>
                 <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
                     {subtitle.subtitleContent}
                 </pre>
