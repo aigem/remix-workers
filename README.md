@@ -124,7 +124,10 @@ export const meta: MetaFunction = () => {
 这个文件定义了哪些路径应该由 Workers 处理。
 
 3. Tailwind CSS:
-使用 Tailwind 可以生成优化的 CSS,减少不必要的样式代码。
+原则：使用 Tailwind 可以生成优化的 CSS,减少不必要的样式代码。
+要求用户界面设计
+- 使用Tailwind CSS进行响应式设计
+- 简洁、直观的用户界面
 
 ## 5. 开发和部署流程
 
