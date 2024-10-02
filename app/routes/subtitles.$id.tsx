@@ -1,5 +1,5 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/cloudflare";
-import { useLoaderData, Link } from "@remix-run/react";
+import { useLoaderData, Link, useRouteError, isRouteErrorResponse } from "@remix-run/react";
 
 export async function loader({ params, context }: LoaderFunctionArgs) {
   const { DB } = context.cloudflare.env;
@@ -23,11 +23,52 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
     throw new Response("未找到字幕", { status: 404 });
   }
 
-  return json({ subtitle });
+  // 明确序列化数据
+  return json({
+    subtitle: {
+      id: subtitle.id,
+      videoUrl: subtitle.videoUrl,
+      subtitleUrl: subtitle.subtitleUrl,
+      videoTitle: subtitle.videoTitle,
+      subtitleContent: subtitle.subtitleContent
+    }
+  });
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error)) {
+    return (
+      <div>
+        <h1>
+          {error.status} {error.statusText}
+        </h1>
+        <p>{error.data}</p>
+      </div>
+    );
+  } else if (error instanceof Error) {
+    return (
+      <div>
+        <h1>Error</h1>
+        <p>{error.message}</p>
+        <p>The stack trace is:</p>
+        <pre>{error.stack}</pre>
+      </div>
+    );
+  } else {
+    return <h1>Unknown Error</h1>;
+  }
 }
 
 export default function SubtitleDetail() {
   const { subtitle } = useLoaderData<typeof loader>();
+
+  console.log("Rendering subtitle:", subtitle);
+
+  if (!subtitle) {
+    return <div>加载中...</div>;
+  }
 
   return (
     <div>
