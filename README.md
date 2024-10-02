@@ -131,6 +131,8 @@ export const meta: MetaFunction = () => {
 1. 开发:
 ```sh
 pnpm run dev
+# 生成类型定义，在wrangler.toml中添加bindings或修改后运行
+npm run cf-typegen 
 ```
 
 2. 构建:
