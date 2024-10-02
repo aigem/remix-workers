@@ -5,7 +5,10 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
   const { DB } = context.cloudflare.env;
   const id = params.id;
 
+  console.log("Fetching subtitle with id:", id);
+
   if (!id) {
+    console.log("Missing ID parameter");
     throw new Response("缺少 ID 参数", { status: 400 });
   }
 
@@ -13,7 +16,10 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
     .bind(id)
     .first();
 
+  console.log("Fetched subtitle:", subtitle);
+
   if (!subtitle) {
+    console.log("Subtitle not found");
     throw new Response("未找到字幕", { status: 404 });
   }
 
