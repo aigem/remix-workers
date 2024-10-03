@@ -205,3 +205,34 @@ npx wrangler d1 execute subtitle --remote --file=./schema.sql
 ```sh
 npx wrangler d1 execute subtitle --remote --file=./seed.sql
 ```
+
+## 使用相关
+1. 使用n8n 连接 cloudflare 数据库
+  /subtitles节点说明：
+  1. 通过 JSON 格式的 POST 请求添加记录
+  2. 通过 JSON 格式的 POST 请求删除记录
+  3. 通过表单提交添加记录
+  4. 通过表单提交删除记录
+  对于 HTTP POST 请求添加记录，您需要发送一个包含以下字段的 JSON 数据：
+  ```json
+  {
+      "apiKey": "n8n_post_api_key",
+      "_action": "create",
+      "videoId": "video_id_here",
+      "videoUrl": "video_url_here",
+      "subtitleUrl": "subtitle_url_here",
+      "videoTitle": "video_title_here",
+      "subtitleContent": "subtitle_content_here"
+  }
+  ```
+  
+  确保设置正确的 Content-Type 头为 application/json。
+  
+  对于 HTTP POST 请求删除记录，您需要发送一个包含以下字段的 JSON 数据：
+  ```json
+  {
+      "apiKey": "n8n_post_api_key",
+      "_action": "delete",
+      "id": "record_id_here"
+  }
+  
