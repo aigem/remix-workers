@@ -16,13 +16,15 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
     try {
         let apiKey: string | null = null;
+        let data: any;
 
         if (contentType && contentType.includes("application/json")) {
-            const data = await request.json();
+            data = await request.json();
             apiKey = data.apiKey;
         } else {
             const formData = await request.formData();
             apiKey = formData.get("apiKey") as string | null;
+            data = Object.fromEntries(formData);
         }
 
         // 验证 API key
@@ -31,9 +33,25 @@ export async function action({ request, context }: ActionFunctionArgs) {
         }
 
         if (contentType && contentType.includes("application/json")) {
-            const data = await request.json();
+            if (data._action === "create") {
+                // 处理添加操作
+                const { videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent } = data;
+                const result = await DB.prepare(
+                    "INSERT INTO video_subtitles (videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent) VALUES (?, ?, ?, ?, ?)"
+                )
+                    .bind(videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent)
+                    .run();
 
-            if (data._action === "delete") {
+                if (result.success) {
+                    return json({
+                        success: true,
+                        message: "记录已成功添加",
+                        newId: result.lastInsertId
+                    });
+                } else {
+                    throw new Error("添加操作失败");
+                }
+            } else if (data._action === "delete") {
                 // 处理删除操作
                 const result = await DB.prepare("DELETE FROM video_subtitles WHERE id = ?")
                     .bind(data.id)
@@ -48,16 +66,30 @@ export async function action({ request, context }: ActionFunctionArgs) {
                 } else {
                     throw new Error("删除操作失败");
                 }
-            } else {
-                // ... 保持现有的添加逻辑 ...
             }
         } else {
             // 处理表单数据
-            const formData = await request.formData();
-            const action = formData.get("_action");
+            const action = data._action;
 
-            if (action === "delete") {
-                const id = formData.get("id") as string;
+            if (action === "create") {
+                const { videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent } = data;
+                const result = await DB.prepare(
+                    "INSERT INTO video_subtitles (videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent) VALUES (?, ?, ?, ?, ?)"
+                )
+                    .bind(videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent)
+                    .run();
+
+                if (result.success) {
+                    return json({
+                        success: true,
+                        message: "记录已成功添加",
+                        newId: result.lastInsertId
+                    });
+                } else {
+                    throw new Error("添加操作失败");
+                }
+            } else if (action === "delete") {
+                const id = data.id;
                 const result = await DB.prepare("DELETE FROM video_subtitles WHERE id = ?")
                     .bind(id)
                     .run();
@@ -70,32 +102,6 @@ export async function action({ request, context }: ActionFunctionArgs) {
                     });
                 } else {
                     throw new Error("删除操作失败");
-                }
-            }
-
-            if (action === "create") {
-                const videoId = formData.get("videoId") as string;
-                const videoUrl = formData.get("videoUrl") as string;
-                const subtitleUrl = formData.get("subtitleUrl") as string;
-                const videoTitle = formData.get("videoTitle") as string;
-                const subtitleContent = formData.get("subtitleContent") as string;
-
-                const result = await DB.prepare(
-                    "INSERT INTO video_subtitles (videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent) VALUES (?, ?, ?, ?, ?)"
-                )
-                    .bind(videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent)
-                    .run();
-
-                if (result.success) {
-                    return json({
-                        success: true,
-                        message: "记录已成功添加",
-                        newId: result.lastInsertId,
-                        videoId: videoId,
-                        videoUrl: videoUrl
-                    });
-                } else {
-                    throw new Error("添加操作失败");
                 }
             }
         }
