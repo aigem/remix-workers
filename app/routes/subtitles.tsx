@@ -12,7 +12,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
     const contentType = request.headers.get("Content-Type");
 
     // 从环境变量中获取 API key
-    const API_KEY = context.cloudflare.env.API_KEY;
+    const API_KEY = context.cloudflare.env.API_KEY as string;
 
     try {
         let apiKey: string | null = null;
@@ -32,77 +32,44 @@ export async function action({ request, context }: ActionFunctionArgs) {
             return json({ success: false, message: "无效的 API key" }, { status: 401 });
         }
 
-        if (contentType && contentType.includes("application/json")) {
-            if (data._action === "create") {
-                // 处理添加操作
-                const { videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent } = data;
-                const result = await DB.prepare(
-                    "INSERT INTO video_subtitles (videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent) VALUES (?, ?, ?, ?, ?)"
-                )
-                    .bind(videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent)
-                    .run();
+        const isApiCall = contentType && contentType.includes("application/json");
 
-                if (result.success) {
-                    return json({
-                        success: true,
-                        message: "记录已成功添加",
-                        newId: result.lastInsertId
-                    });
-                } else {
-                    throw new Error("添加操作失败");
-                }
-            } else if (data._action === "delete") {
-                // 处理删除操作
-                const result = await DB.prepare("DELETE FROM video_subtitles WHERE id = ?")
-                    .bind(data.id)
-                    .run();
+        if (data._action === "create") {
+            // 处理添加操作
+            const { videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent } = data;
+            const result = await DB.prepare(
+                "INSERT INTO video_subtitles (videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent) VALUES (?, ?, ?, ?, ?)"
+            )
+                .bind(videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent)
+                .run();
 
-                if (result.success) {
-                    return json({
-                        success: true,
-                        message: "记录已成功删除",
-                        deletedId: data.id
-                    });
-                } else {
-                    throw new Error("删除操作失败");
-                }
+            if (result.success) {
+                const response = {
+                    success: true,
+                    message: "记录已成功添加",
+                    newId: result.meta?.last_row_id,
+                    videoId: videoId,
+                    videoUrl: videoUrl
+                };
+                return isApiCall ? json(response) : response;
+            } else {
+                throw new Error("添加操作失败");
             }
-        } else {
-            // 处理表单数据
-            const action = data._action;
+        } else if (data._action === "delete") {
+            // 处理删除操作
+            const result = await DB.prepare("DELETE FROM video_subtitles WHERE id = ?")
+                .bind(data.id)
+                .run();
 
-            if (action === "create") {
-                const { videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent } = data;
-                const result = await DB.prepare(
-                    "INSERT INTO video_subtitles (videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent) VALUES (?, ?, ?, ?, ?)"
-                )
-                    .bind(videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent)
-                    .run();
-
-                if (result.success) {
-                    return json({
-                        success: true,
-                        message: "记录已成功添加",
-                        newId: result.lastInsertId
-                    });
-                } else {
-                    throw new Error("添加操作失败");
-                }
-            } else if (action === "delete") {
-                const id = data.id;
-                const result = await DB.prepare("DELETE FROM video_subtitles WHERE id = ?")
-                    .bind(id)
-                    .run();
-
-                if (result.success) {
-                    return json({
-                        success: true,
-                        message: "记录已成功删除",
-                        deletedId: id
-                    });
-                } else {
-                    throw new Error("删除操作失败");
-                }
+            if (result.success) {
+                const response = {
+                    success: true,
+                    message: "记录已成功删除",
+                    deletedId: data.id
+                };
+                return isApiCall ? json(response) : response;
+            } else {
+                throw new Error("删除操作失败");
             }
         }
     } catch (error) {
@@ -151,7 +118,7 @@ export default function Subtitles() {
             </ul>
 
             {actionData?.success && <p>{actionData.message || "操作成功!"}</p>}
-            {!actionData?.success && actionData?.message && <p style={{color: 'red'}}>{actionData.message}</p>}
+            {!actionData?.success && actionData?.message && <p style={{ color: 'red' }}>{actionData.message}</p>}
         </div>
     );
 }
