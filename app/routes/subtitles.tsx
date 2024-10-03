@@ -14,7 +14,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
     try {
         if (contentType && contentType.includes("application/json")) {
             const data = await request.json();
-            
+
             if (data._action === "delete") {
                 // 处理删除操作
                 const result = await DB.prepare("DELETE FROM video_subtitles WHERE id = ?")
@@ -54,7 +54,32 @@ export async function action({ request, context }: ActionFunctionArgs) {
                     throw new Error("删除操作失败");
                 }
             }
-            // ... 保持其他表单处理逻辑不变 ...
+
+            if (action === "create") {
+                const videoId = formData.get("videoId") as string;
+                const videoUrl = formData.get("videoUrl") as string;
+                const subtitleUrl = formData.get("subtitleUrl") as string;
+                const videoTitle = formData.get("videoTitle") as string;
+                const subtitleContent = formData.get("subtitleContent") as string;
+
+                const result = await DB.prepare(
+                    "INSERT INTO video_subtitles (videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent) VALUES (?, ?, ?, ?, ?)"
+                )
+                    .bind(videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent)
+                    .run();
+
+                if (result.success) {
+                    return json({
+                        success: true,
+                        message: "记录已成功添加",
+                        newId: result.lastInsertId,
+                        videoId: videoId,
+                        videoUrl: videoUrl
+                    });
+                } else {
+                    throw new Error("添加操作失败");
+                }
+            }
         }
     } catch (error) {
         console.error("Action error:", error);
@@ -75,6 +100,7 @@ export default function Subtitles() {
             <h2>添加新字幕</h2>
             <Form method="post">
                 <input type="hidden" name="_action" value="create" />
+                <input type="text" name="videoId" placeholder="视频 ID" required />
                 <input type="text" name="videoUrl" placeholder="视频 URL" required />
                 <input type="text" name="subtitleUrl" placeholder="字幕 URL" required />
                 <input type="text" name="videoTitle" placeholder="视频标题" required />

@@ -195,3 +195,13 @@ export default defineConfig({
 1. 确保了解 Cloudflare Workers 的限制,如执行时间和内存限制。
 2. 考虑使用 Cloudflare 的其他服务,如 KV 存储或 D1 数据库,以增强应用功能。
 
+## 数据库处理：
+命令行 
+插入数据表
+```sh
+npx wrangler d1 execute subtitle --remote --file=./schema.sql
+```
+插入数据
+```sh
+npx wrangler d1 execute subtitle --remote --file=./seed.sql
+```
