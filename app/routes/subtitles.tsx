@@ -11,7 +11,25 @@ export async function action({ request, context }: ActionFunctionArgs) {
     const { DB } = context.cloudflare.env;
     const contentType = request.headers.get("Content-Type");
 
+    // 从环境变量中获取 API key
+    const API_KEY = context.cloudflare.env.API_KEY;
+
     try {
+        let apiKey: string | null = null;
+
+        if (contentType && contentType.includes("application/json")) {
+            const data = await request.json();
+            apiKey = data.apiKey;
+        } else {
+            const formData = await request.formData();
+            apiKey = formData.get("apiKey") as string | null;
+        }
+
+        // 验证 API key
+        if (apiKey !== API_KEY) {
+            return json({ success: false, message: "无效的 API key" }, { status: 401 });
+        }
+
         if (contentType && contentType.includes("application/json")) {
             const data = await request.json();
 
@@ -100,6 +118,7 @@ export default function Subtitles() {
             <h2>添加新字幕</h2>
             <Form method="post">
                 <input type="hidden" name="_action" value="create" />
+                <input type="text" name="apiKey" placeholder="API Key" required />
                 <input type="text" name="videoId" placeholder="视频 ID" required />
                 <input type="text" name="videoUrl" placeholder="视频 URL" required />
                 <input type="text" name="subtitleUrl" placeholder="字幕 URL" required />
@@ -112,12 +131,13 @@ export default function Subtitles() {
             <ul>
                 {subtitles.map((subtitle: any) => (
                     <li key={subtitle.id}>
-                        <Link to={`/subtitles/${subtitle.id}`}>
+                        <Link to={`/show/subtitles/${subtitle.id}`}>
                             {subtitle.videoTitle}
                         </Link>
                         <Form method="post" style={{ display: 'inline' }}>
                             <input type="hidden" name="_action" value="delete" />
                             <input type="hidden" name="id" value={subtitle.id} />
+                            <input type="hidden" name="apiKey" value="" /> {/* 这里需要客户端提供 API key */}
                             <button type="submit">删除</button>
                         </Form>
                     </li>
@@ -125,6 +145,7 @@ export default function Subtitles() {
             </ul>
 
             {actionData?.success && <p>{actionData.message || "操作成功!"}</p>}
+            {!actionData?.success && actionData?.message && <p style={{color: 'red'}}>{actionData.message}</p>}
         </div>
     );
 }
