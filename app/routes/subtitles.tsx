@@ -32,8 +32,6 @@ export async function action({ request, context }: ActionFunctionArgs) {
             return json({ success: false, message: "无效的 API key" }, { status: 401 });
         }
 
-        const isApiCall = contentType && contentType.includes("application/json");
-
         if (data._action === "create") {
             // 处理添加操作
             const { videoId, videoUrl, subtitleUrl, videoTitle, subtitleContent } = data;
@@ -44,14 +42,13 @@ export async function action({ request, context }: ActionFunctionArgs) {
                 .run();
 
             if (result.success) {
-                const response = {
+                return json({
                     success: true,
                     message: "记录已成功添加",
                     newId: result.meta?.last_row_id,
                     videoId: videoId,
                     videoUrl: videoUrl
-                };
-                return isApiCall ? json(response) : response;
+                });
             } else {
                 throw new Error("添加操作失败");
             }
@@ -62,12 +59,11 @@ export async function action({ request, context }: ActionFunctionArgs) {
                 .run();
 
             if (result.success) {
-                const response = {
+                return json({
                     success: true,
                     message: "记录已成功删除",
                     deletedId: data.id
-                };
-                return isApiCall ? json(response) : response;
+                });
             } else {
                 throw new Error("删除操作失败");
             }
