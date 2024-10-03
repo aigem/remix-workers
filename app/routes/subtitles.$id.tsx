@@ -1,6 +1,16 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/cloudflare";
 import { useLoaderData, Link, useRouteError, isRouteErrorResponse } from "@remix-run/react";
 
+// 添加类型定义
+type Subtitle = {
+    id: number;
+    videoId: string;
+    videoUrl: string;
+    subtitleUrl: string;
+    videoTitle: string;
+    subtitleContent: string;
+};
+
 export async function loader({ params, context }: LoaderFunctionArgs) {
     const { DB } = context.cloudflare.env;
     const id = params.id;
@@ -11,7 +21,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
 
     const subtitle = await DB.prepare("SELECT * FROM video_subtitles WHERE id = ?")
         .bind(id)
-        .first();
+        .first<Subtitle>();
 
     if (!subtitle) {
         throw new Response("未找到字幕", { status: 404 });
@@ -53,6 +63,7 @@ export default function SubtitleDetail() {
         <div>
             <h1>{subtitle.videoTitle} 的字幕详情</h1>
             <p>ID: {subtitle.id}</p>
+            <p>视频 ID: {subtitle.videoId}</p>
             <p>视频 URL: {subtitle.videoUrl}</p>
             <p>字幕 URL: {subtitle.subtitleUrl}</p>
             <h2>字幕内容:</h2>

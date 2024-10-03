@@ -5,6 +5,7 @@ import type { MetaFunction } from "@remix-run/cloudflare";
 // 定义字幕数据的类型
 type Subtitle = {
     id: number;
+    videoId: string;
     videoUrl: string;
     subtitleUrl: string;
     videoTitle: string;
@@ -65,6 +66,9 @@ export default function SubtitlePage() {
             <h1>{subtitle.videoTitle}</h1>
             <p>
                 <strong>字幕 ID：</strong> {subtitle.id}
+            </p>
+            <p>
+                <strong>视频 ID：</strong> {subtitle.videoId}
             </p>
             <p>
                 <strong>视频链接：</strong> {subtitle.videoUrl}
